@@ -6,6 +6,8 @@ from datetime import datetime
 import json
 import pickle
 import subprocess
+import matplotlib.pyplot as plt
+import numpy as np
 
 def run_win_cmd(cmd):
     result = []
@@ -142,9 +144,11 @@ def generate_caption(mode = None):
     print(f"{datetime.now()}: Caption Generated")
     return(caption)
 
-def add_caption(img_path,caption,font_size = None,output_name = "Test_output/output.jpg",font = "impact.ttf",wrap_factor = 2):
-    
-    img = Image.open(img_path)
+def add_caption(caption,img_path = None,font_size = None,output_name = "Test_output/output.jpg",font = "impact.ttf",wrap_factor = 2,updown = False,rgb1 = None,rgb2 = None,resx = 1920,resy = 1080):
+    if img_path != None:
+        img = Image.open(img_path)
+    else:
+        img = generate_gradient_image(rgb1 = rgb1,rgb2 = rgb2,updown = updown,resx = resx, resy = resy)
     d = ImageDraw.Draw(img)
     
     x_size = img.size[0]
@@ -181,13 +185,38 @@ def add_caption(img_path,caption,font_size = None,output_name = "Test_output/out
     print(f'{datetime.now()}: Saving Image to {output_name}')
     img.save(output_name)
 
+def generate_gradient_image(rgb1 = None,rgb2 = None,updown = True,resx = 1920,resy = 1080):
+    print(f"{datetime.now()}: Making Gradient Image")
+
+    if rgb1 == None:
+        rgb1 = np.random.uniform(0,1,size = (3))
+    if rgb2 == None:
+        rgb2 = np.random.uniform(0,1,size = (3))
+    print(f"{datetime.now()}: RGB1 set to {rgb1}")
+    print(f"{datetime.now()}: RGB2 set to {rgb2}")
+    x = np.ones((resy, resx, 3))
+    x[:, :, 0:3] = rgb1
+
+    y = np.ones((resy, resx, 3))
+    y[:,:,0:3] = rgb2
+    
+    if updown == True:
+        c = np.linspace(0, 1, resy)[:, None, None]
+    else:
+        c = np.linspace(0,1,resx)[None,:,None]
+    gradient = x + (y - x) * c
+    gradient = 255*gradient
+    print(gradient.shape)
+    return(Image.fromarray(gradient.astype(np.uint8)))
+
 if __name__ == "__main__":
     example_dir = "Test_images/"
     example_out = "Test_output/"
     example_images = os.listdir("Test_images/")
     chosen_image = example_dir + random.choice(example_images)
-
+    
     caption = generate_caption()
-    add_caption(chosen_image,caption)
+    add_caption(caption)
     #load_and_save_api("magic-items")
+    
     
